@@ -147,13 +147,15 @@ resource "aws_iam_policy" "cross_account_policy" {
   name   = "CrossAccountPolicy"
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = {
-      Effect = "Allow",
-      Action = "sts:AssumeRole",
-      Resource = [
-        "arn:aws:iam::1234567890:role/*"
-      ]
-    }
+    Statement = [
+        {
+            Effect = "Allow",
+            Action = "sts:AssumeRole",
+            Resource = [
+                "arn:aws:iam::1234567890:role/*"
+            ]
+        }
+    ]
   })
 }
 
