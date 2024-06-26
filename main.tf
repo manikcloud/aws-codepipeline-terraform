@@ -89,23 +89,23 @@ resource "aws_codebuild_project" "codebuild_project" {
   source {
     type      = "S3"
     location  = "${aws_s3_bucket.codebuild_bucket.bucket}/source.zip" # Update this as needed
-        buildspec = <<EOF
-version: 0.2
+    buildspec = <<EOF
+    version: 0.2
 
-phases:
-  build:
-    commands:
-      - mkdir .ebextensions
-      - cd .ebextensions
-      - aws s3 cp s3://pldt-nprd-smart-appcode-repo/ebs/NETFLIX/.ebextensions/ . --recursive
-      - cd ..
-      - ls -lart
+    phases:
+    build:
+        commands:
+        - mkdir .ebextensions
+        - cd .ebextensions
+        - aws s3 cp s3://pldt-nprd-smart-appcode-repo/ebs/NETFLIX/.ebextensions/ . --recursive
+        - cd ..
+        - ls -lart
 
-artifacts:
-  files:
-    - '**/*'
-EOF
-  }
+    artifacts:
+    files:
+        - '**/*'
+    EOF
+  
   }
 
   cache {
