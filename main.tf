@@ -1,9 +1,9 @@
 provider "aws" {
-  region = "us-west-2" # Change to your desired region
+  region = "us-east-1" # Change to your desired region
 }
 
 resource "aws_s3_bucket" "codebuild_bucket" {
-  bucket = "my-codebuild-bucket" # Change to your desired bucket name
+  bucket = "my-codebuild-bucket-12345" # Change to your desired bucket name
   acl    = "private"
   
   tags = {
