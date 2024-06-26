@@ -34,32 +34,59 @@ resource "aws_iam_role" "codebuild_role" {
   })
 }
 
-resource "aws_iam_policy" "codebuild_policy" {
-  name        = "codebuild-policy"
-  description = "Policy for CodeBuild to access S3 bucket"
-
+resource "aws_iam_policy" "codebuild_base_policy" {
+  name   = "CodeBuildBasePolicy-${var.environment}-${var.region}"
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Allow"
+        Effect = "Allow",
+        Resource = [
+          "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/${var.environment}",
+          "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/${var.environment}:*"
+        ],
         Action = [
-          "s3:GetObject",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Resource = [
+          "arn:aws:s3:::codepipeline-${var.region}-*",
+          "arn:aws:s3:::pldt-nprd-smart-appcode-repo",
+          "arn:aws:s3:::pldt-nprd-smart-appcode-repo/*"
+        ],
+        Action = [
           "s3:PutObject",
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:GetBucketAcl",
+          "s3:GetBucketLocation",
           "s3:ListBucket"
         ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "codebuild:CreateReportGroup",
+          "codebuild:CreateReport",
+          "codebuild:UpdateReport",
+          "codebuild:BatchPutTestCases",
+          "codebuild:BatchPutCodeCoverages"
+        ],
         Resource = [
-          aws_s3_bucket.codebuild_bucket.arn,
-          "${aws_s3_bucket.codebuild_bucket.arn}/*"
+          "arn:aws:codebuild:${var.region}:${data.aws_caller_identity.current.account_id}:report-group/${var.environment}-*"
         ]
       }
     ]
   })
 }
 
-resource "aws_iam_role_policy_attachment" "codebuild_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "codebuild_base_policy_attachment" {
   role       = aws_iam_role.codebuild_role.name
-  policy_arn = aws_iam_policy.codebuild_policy.arn
+  policy_arn = aws_iam_policy.codebuild_base_policy.arn
 }
 
 output "codebuild_role_arn" {
@@ -75,7 +102,7 @@ resource "aws_codebuild_project" "codebuild_project" {
   service_role  = aws_iam_role.codebuild_role.arn
 
   artifacts {
-    type = "S3"
+    type     = "S3"
     location = aws_s3_bucket.codebuild_bucket.bucket
     packaging = "ZIP"
   }
@@ -90,27 +117,34 @@ resource "aws_codebuild_project" "codebuild_project" {
     type      = "S3"
     location  = "${aws_s3_bucket.codebuild_bucket.bucket}/source.zip" # Update this as needed
     buildspec = <<EOF
-    version: 0.2
+version: 0.2
 
-    phases:
-    build:
-        commands:
-        - mkdir .ebextensions
-        - cd .ebextensions
-        - aws s3 cp s3://pldt-nprd-smart-appcode-repo/ebs/NETFLIX/.ebextensions/ . --recursive
-        - cd ..
-        - ls -lart
+phases:
+  build:
+    commands:
+      - mkdir .ebextensions
+      - cd .ebextensions
+      - aws s3 cp s3://pldt-nprd-smart-appcode-repo/ebs/NETFLIX/.ebextensions/ . --recursive
+      - cd ..
+      - ls -lart
 
-    artifacts:
-    files:
-        - '**/*'
-    EOF
-  
+artifacts:
+  files:
+    - '**/*'
+EOF
   }
 
   cache {
-    type = "S3"
+    type     = "S3"
     location = aws_s3_bucket.codebuild_bucket.bucket
+  }
+
+  logs_config {
+    cloudwatch_logs {
+      status     = "ENABLED"
+      group_name = "/logs/s3/Netflix/"
+      stream_name = "codebuild-${var.environment}-${var.region}"
+    }
   }
 
   tags = {
@@ -143,6 +177,7 @@ resource "aws_iam_role" "codepipeline_role" {
   })
 }
 
+###### Cross account policy ###
 resource "aws_iam_policy" "cross_account_policy" {
   name   = "CrossAccountPolicy"
   policy = jsonencode({
