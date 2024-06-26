@@ -105,3 +105,70 @@ resource "aws_codebuild_project" "codebuild_project" {
 output "codebuild_project_name" {
   value = aws_codebuild_project.codebuild_project.name
 }
+
+
+#### codepipeline iam role ####
+
+resource "aws_iam_role" "codepipeline_role" {
+  name = "codepipeline-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "codepipeline.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "codepipeline_policy" {
+  name        = "codepipeline-policy"
+  description = "Policy for CodePipeline to access S3, CodeBuild, and EBS"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.codebuild_bucket.arn,
+          "${aws_s3_bucket.codebuild_bucket.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "codebuild:StartBuild",
+          "codebuild:BatchGetBuilds"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticbeanstalk:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "codepipeline_policy_attachment" {
+  role       = aws_iam_role.codepipeline_role.name
+  policy_arn = aws_iam_policy.codepipeline_policy.arn
+}
+
+output "codepipeline_role_arn" {
+  value = aws_iam_role.codepipeline_role.arn
+}
