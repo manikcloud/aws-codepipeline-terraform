@@ -143,6 +143,25 @@ resource "aws_iam_role" "codepipeline_role" {
   })
 }
 
+resource "aws_iam_policy" "cross_account_policy" {
+  name   = "CrossAccountPolicy"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = {
+      Effect = "Allow",
+      Action = "sts:AssumeRole",
+      Resource = [
+        "arn:aws:iam::1234567890:role/*"
+      ]
+    }
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cross_account_policy_attachment" {
+  role       = aws_iam_role.codepipeline_role.name
+  policy_arn = aws_iam_policy.cross_account_policy.arn
+}
+
 resource "aws_iam_policy" "codepipeline_policy" {
   name        = "codepipeline-policy"
   description = "Policy for CodePipeline to access S3, CodeBuild, and EBS"
@@ -184,6 +203,7 @@ resource "aws_iam_policy" "codepipeline_policy" {
 resource "aws_iam_role_policy_attachment" "codepipeline_policy_attachment" {
   role       = aws_iam_role.codepipeline_role.name
   policy_arn = aws_iam_policy.codepipeline_policy.arn
+  aws_iam_policy.cross_account_policy.arn
 }
 
 output "codepipeline_role_arn" {
