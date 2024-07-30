@@ -1,6 +1,19 @@
 # AWS CodePipeline for and Elastic Beanstalk deployment with Terraform
 
-This repository contains Terraform configurations to set up an AWS CodePipeline with integrated CodeBuild and Elastic Beanstalk deployment.
+
+This repository contains Terraform configurations to set up a complete CI/CD pipeline using AWS CodePipeline, CodeBuild, and Elastic Beanstalk. The pipeline fetches source code from an S3 bucket, builds it using CodeBuild, and deploys it to an Elastic Beanstalk environment. 
+
+The setup includes the following key components:
+
+- **S3 Bucket:** An S3 bucket is configured to store the source code and build artifacts. This bucket serves as the primary source for CodePipeline and storage for build outputs.
+- **IAM Roles and Policies:** The necessary IAM roles and policies are created to provide CodePipeline, CodeBuild, and other AWS services the permissions required to interact with each other securely. This includes roles for CodeBuild to access S3 and CloudWatch and roles for CodePipeline to manage the entire pipeline process.
+- **CodeBuild Project:** A CodeBuild project is defined with all necessary environment settings, including the compute type, build specifications, and artifact locations. This project is responsible for compiling and packaging the source code.
+- **CodePipeline Configuration:** The CodePipeline is set up with multiple stages:
+  - **Source Stage:** Fetches the source code from the S3 bucket.
+  - **Build Stage:** Uses CodeBuild to compile and package the application.
+  - **Deploy Stage:** Deploys the built application to an Elastic Beanstalk environment.
+
+The CI/CD pipeline automates the entire process from code check-in to deployment, ensuring a consistent and reliable deployment workflow.
 
 ## Prerequisites
 
@@ -8,15 +21,6 @@ This repository contains Terraform configurations to set up an AWS CodePipeline 
 - AWS CLI configured with appropriate permissions
 - An S3 bucket for CodePipeline source artifacts
 - Elastic Beanstalk application and environment
-
-## Configuration
-
-Before deploying the Terraform configurations, ensure you have the following details:
-
-- Desired AWS region
-- S3 bucket name for CodeBuild artifacts
-- Elastic Beanstalk application name
-- Elastic Beanstalk environment name
 
 ## Usage
 
@@ -44,16 +48,6 @@ Before deploying the Terraform configurations, ensure you have the following det
     ```
 
     Confirm the apply with `yes` when prompted.
-
-## Terraform Configuration
-
-### AWS Provider
-
-```hcl
-provider "aws" {
-  region = "us-east-1" # Change to your desired region
-}
-```
 
 ## Overview of Terraform Configuration
 
@@ -84,20 +78,10 @@ Defines a pipeline with three stages:
 ## Outputs
 
 - **bucket_name:** Name of the S3 bucket used by CodeBuild.
-
-```
-resource "aws_s3_bucket" "codebuild_bucket" {
-  bucket = "my-codebuild-bucket-12345" # Change to your desired bucket name
-  acl    = "private"
-}
-
-```
 - **codebuild_role_arn:** ARN of the IAM role for CodeBuild.
 - **codepipeline_role_arn:** ARN of the IAM role for CodePipeline.
 - **codebuild_project_name:** Name of the CodeBuild project.
 - **pipeline_name:** Name of the CodePipeline.
-
-
 
 
 
