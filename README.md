@@ -53,6 +53,8 @@ Before deploying the Terraform configurations, ensure you have the following det
 provider "aws" {
   region = "us-east-1" # Change to your desired region
 }
+```
+
 ## Overview of Terraform Configuration
 
 ### AWS Provider
